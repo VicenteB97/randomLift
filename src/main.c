@@ -1,31 +1,47 @@
 #include "header.h"
 
-int
-main(int argc, char* argv[])
-{
+int main(void){
+	// Parameter definition:
 	double liftForce__N,
-		dynamicPressure__Pa = 150325.0,
-		staticPressure__Pa = 101325.0,
-		airTemperature__K = 273.0,
-		specificGasConstant__J_KgK = 287.05,
-		surfaceArea__m2 = 0.3,
-		liftCoefficient__ = 0.2;
+		totalPressure__Pa = 102233.75, // approx. pressure flying at 150 km/h 
+		airTemperature__K = 263.0,	// -10ºC
+		surfaceArea__m2 = 16.17, 
+		liftCoefficient__ = 0.64, // Av. lift coefficient
+		altitude__m = 2500,
+		humidityFactor__ = 0.45;
 
+	// If we want to study the deterministic case, we include a positive-parameter-value check
+	#ifndef RANDOM
+	double inputValues[] = {
+		totalPressure__Pa,
+		airTemperature__K, 
+		surfaceArea__m2, 
+		liftCoefficient__,
+		altitude__m,
+		humidityFactor__
+	};
+    bool canContinue = (
+		humidityFactor__ <= 1 && 
+		arePositiveValues(inputValues)
+	);
+    if(!canContinue){ return EXIT_FAILURE; }
+	#endif
+
+	// If we want to simulate the random parameter case, we overwrite the pre-defined values for UxHw values: 
 	#ifdef RANDOM
-	dynamicPressure__Pa = UxHwDoubleUniformDist(150324.8, 150325.2);
-    staticPressure__Pa = UxHwDoubleUniformDist(101324.8, 101325.2);
-    airTemperature__K = UxHwDoubleUniformDist(272.8, 273.2);
-	specificGasConstant__J_KgK = 287.05;
-    surfaceArea__m2 = 0.3;
-    liftCoefficient__ = UxHwDoubleUniformDist(0.18, 0.24);
+	totalPressure__Pa = UxHwDoubleUniformDist(102230.75, 102235.75);
+    airTemperature__K = UxHwDoubleUniformDist(262.8, 263.2);
+    liftCoefficient__ = UxHwDoubleUniformDist(1.4, 1.8);
+	altitude__m = UxHwDoubleUniformDist(2499.8, 2500.2);
+	humidityFactor__ = UxHwDoubleUniformDist(0.44, 0.56);
 	#endif
 
 	return computeLiftFunction(
 		&liftForce__N,
-		dynamicPressure__Pa,
-		staticPressure__Pa,
+		totalPressure__Pa,
+		altitude__m,
+		humidityFactor__,
 		airTemperature__K,
-		specificGasConstant__J_KgK,
 		surfaceArea__m2,
 		liftCoefficient__
 	);
@@ -33,41 +49,35 @@ main(int argc, char* argv[])
 
 uint16_t computeLiftFunction(
     double* outputLiftForce__N,
-    double dynamicPressure__Pa,
-    double staticPressure__Pa,
+    double totalPressure__Pa,
+    double altitude__m,
+    double humidityFactor__,
     double airTemperature__K,
-    double specificGasConstant__J_KgK,
     double surfaceArea__m2,
     double liftCoefficient__
 ){
-    // First check that input values are in acceptable range:
-    double inputValues[6] = {dynamicPressure__Pa, staticPressure__Pa, airTemperature__K, specificGasConstant__J_KgK, surfaceArea__m2, liftCoefficient__};
-    bool canContinue = (liftCoefficient__ <= 1 && arePositiveValues(inputValues, 6));
-    if(!canContinue){ return EXIT_FAILURE; }
+	// First, we compute the specific gas constant for humid air:
+	double humidAirGasConstant__J_KgK = computeSpecificGasConstantHumidAir(humidityFactor__);
+
+	// Compute the static pressure at cruise altitude
+    double staticPressure__Pa = computeAltitudePressure(
+		altitude__m,
+		airTemperature__K,
+		humidAirGasConstant__J_KgK,
+		humidityFactor__
+	);
 
     // Compute air density:
-    double airDensity__kg_m3 = 0.0;
-    computeAirDensity__kg_m3(
-        &airDensity__kg_m3,
-        staticPressure__Pa,
-        specificGasConstant__J_KgK,
-        airTemperature__K
-    );
+    double airDensity__kg_m3 = computeAirDensity(
+		staticPressure__Pa, humidAirGasConstant__J_KgK, airTemperature__K);
 
-    // Using the recently computed air density, 
-    // compute velocity as measured by a Pitot tube:
-    double squaredVelocity__m_s = 0.0;
-    computeSquaredVelocityPitotTube__m_s(
-        &squaredVelocity__m_s,
-        dynamicPressure__Pa,
-        airDensity__kg_m3
-    );
+	// Compute air velocity:
+	double airVelocitySquared__m_s = computeAirVelocitySquared(staticPressure__Pa, totalPressure__Pa, airDensity__kg_m3);
 
     // Finally, compute the lift force by the airfoil:
-    computeLiftAirfoil__N(
-        outputLiftForce__N,
+    *outputLiftForce__N = computeLiftAirfoil(
         airDensity__kg_m3,
-        squaredVelocity__m_s,
+		airVelocitySquared__m_s,
         surfaceArea__m2,
         liftCoefficient__
     );
@@ -80,64 +90,55 @@ uint16_t computeLiftFunction(
     return EXIT_SUCCESS;
 };
 
-bool arePositiveValues(double* valuesArray, uint16_t numValuesCount){
-    uint16_t k = 0;
-    while(k < numValuesCount){
-        if(valuesArray[k] <= (double)0){ return false; }
-        k++;
-    }
-
-    return true;
-};
-
-int16_t computeSquaredVelocityPitotTube__m_s(
-    double* outputSquaredVelocity__m_s,
-    double dynamicPressure__Pa,
-    double airDensity__kg_m3
+double computeSpecificGasConstantHumidAir(
+	double humidityFactor__
 ){
-    // First, let us check that the input values are positive
-    double inputArray[2] = {dynamicPressure__Pa, airDensity__kg_m3};
-    if(!arePositiveValues(inputArray, 2)){ 
-        fprintf(stderr, "Not all values are positive at velocity computation.\n"); 
-        return EXIT_FAILURE; 
-    }
-
-    // Compute the desired SQUARED velocity (we avoid computing the square root)
-    *outputSquaredVelocity__m_s = 2 * dynamicPressure__Pa / airDensity__kg_m3;
-    return EXIT_SUCCESS;
+	return __DRY_AIR_CONSTANT__ * (1 + humidityFactor__ * (__WATER_VAPOR_CONSTANT__ / __DRY_AIR_CONSTANT__ - 1));
 };
 
-int16_t computeAirDensity__kg_m3(
-    double* outputAirDensity__kg_m3,
+double computeAltitudePressure(
+	double altitude__m,
+	double temperature__K,
+	double humidAirGasConstant__J_KgK,
+	double humidityFactor__
+){
+	double molarMassHumidAir__kg_mol = __MOLAR_MASS_DRY_AIR__ * (1-humidityFactor__) + humidityFactor__ * __MOLAR_MASS_WATER_VAPOR__;
+
+	return __PRESSURE_SEA_LEVEL__ * exp(-__GRAV_CONSTANT__ * molarMassHumidAir__kg_mol * altitude__m / humidAirGasConstant__J_KgK / temperature__K);
+};
+
+double computeAirDensity(
     double staticPressure__Pa,
-    double specificGasConstant__J_KgK,
+	double humidAirGasConstant__J_KgK,
     double airTemperature__K
 ){
-    // Usual check that values are positive
-    double inputArray[3] = {staticPressure__Pa, specificGasConstant__J_KgK, airTemperature__K};
-    if(!arePositiveValues(inputArray, 3)){ 
-        fprintf(stderr, "Not all values are positive at airDensity computation.\n"); 
-        return EXIT_FAILURE; 
-    }
-
-    *outputAirDensity__kg_m3 = staticPressure__Pa / (specificGasConstant__J_KgK * airTemperature__K);
-    return EXIT_SUCCESS;
+    return staticPressure__Pa / (humidAirGasConstant__J_KgK * airTemperature__K);
 };
 
-int16_t computeLiftAirfoil__N(
-    double* outputLiftAirfoil__N,
+double computeAirVelocitySquared(
+	double staticPressure__Pa,
+	double totalPressure__Pa,
+	double airDensity__Kg_m3
+){
+	return 2 / airDensity__Kg_m3 * (totalPressure__Pa - staticPressure__Pa);
+};
+
+double computeLiftAirfoil(
     double airDensity__kg_m3,
     double squaredAirflowVelocity__m_s,
     double surfaceArea__m2,
     double liftCoefficient__ // No units added, since its a dimensionless constant
 ){
-    // Usual check that values are positive
-    double inputArray[4] = {airDensity__kg_m3, squaredAirflowVelocity__m_s, surfaceArea__m2, liftCoefficient__};
-    if(!arePositiveValues(inputArray, 4)){ 
-        fprintf(stderr, "Not all values are positive at lift Force computation.\n"); 
-        return EXIT_FAILURE; 
+    return 0.5 * airDensity__kg_m3 * squaredAirflowVelocity__m_s * surfaceArea__m2 * liftCoefficient__;
+};
+
+bool arePositiveValues(double* valuesArray){
+	uint16_t sizeCount = sizeof(*valuesArray)/sizeof(double);
+    uint16_t k = 0;
+    while(k < sizeCount){
+        if(valuesArray[k] <= (double)0){ return false; }
+        k++;
     }
 
-    *outputLiftAirfoil__N = 0.5 * airDensity__kg_m3 * squaredAirflowVelocity__m_s * surfaceArea__m2 * liftCoefficient__;
-    return EXIT_SUCCESS;
+    return true;
 };
