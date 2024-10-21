@@ -7,7 +7,7 @@ int main(void){
 		airTemperature__K = 263.0,	// -10ºC
 		surfaceArea__m2 = 16.17, 
 		liftCoefficient__ = 0.64, // Av. lift coefficient
-		altitude__m = 2500,
+		altitude__m = 2000,
 		humidityFactor__ = 0.45;
 
 	// If we want to study the deterministic case, we include a positive-parameter-value check
@@ -29,11 +29,10 @@ int main(void){
 
 	// If we want to simulate the random parameter case, we overwrite the pre-defined values for UxHw values: 
 	#ifdef RANDOM
-	totalPressure__Pa = UxHwDoubleUniformDist(102230.75, 102235.75);
-    airTemperature__K = UxHwDoubleUniformDist(262.8, 263.2);
-    liftCoefficient__ = UxHwDoubleUniformDist(1.4, 1.8);
-	altitude__m = UxHwDoubleUniformDist(2499.8, 2500.2);
-	humidityFactor__ = UxHwDoubleUniformDist(0.44, 0.56);
+	totalPressure__Pa = UxHwDoubleUniformDist(101211.4125, 103256.0875);
+    airTemperature__K = UxHwDoubleUniformDist(262.9, 263.1);
+	altitude__m = UxHwDoubleUniformDist(1900.0, 2100.0);
+	humidityFactor__ = UxHwDoubleUniformDist(0.44325, 0.45675);
 	#endif
 
 	return computeLiftFunction(

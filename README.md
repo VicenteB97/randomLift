@@ -26,10 +26,15 @@ R = R_{d}(1 + f(R_v/R_d - 1)),
 ```
 where $f$ is the humidity factor, $R_d$ and $R_v$ are the dry and water vapor molar masses, and $R_d$ and $R_v$ are the dry and water vapor specific gas constants, respectively.
 
-Taking into account all equations, the set of input parameters to the model is: $C_L, S, P_{total}, T, h$ and $f$. Based on how these parameters are obtained, we can assume the following parameter distributions:
-- $C_L \sim U()$, because it is determined expermientally.
-- $P_{total} \sim U()$ is the total pressure calculated from the pitot tube, which is itself obtained in-flight from several Pitot tubes.
-- $h$
+Taking into account all equations, the set of input parameters to the model is: $C_L, S, P_{total}, T, h$ and $f$. As a concrete example, we consider a [Cessna 172](http://dx.doi.org/10.13140/RG.2.2.27040.51205), which has the (assumed deterministic) parameters:
+- $C_L = 0.64$ is the average lift coefficient in a cruising setting.
+- $S = 16.17~m^2$ is the average wing area.
+
+Now, we consider the following distributional parameters for a cruise flight at $h = 2000~m$ over sea level:
+- $h \sim U(1900,2100)$ is an altitude ($m$) value based on [radar altimetry](https://avsi.aero/wp-content/uploads/2021/12/Radar-Altimeter-Overview-of-Design-and-Performance.pdf) assuming a $5\%$ tolerance error.
+- $P_{total} \sim U(101211.4125, 103256.0875)$ is the total pressure ($Pa$) [calculated from the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is itself obtained in-flight from several Pitot tubes.
+- $f \sim U(0.44325, 0.45675)$ according to the chart of [measurement tolerance](https://www.rotronic.com/media/productattachments/files/h/u/humidity-accuracy-demystified.pdf).
+- $T \sim U(262.9,263.1)$ is the static air temperature ($K$), which we have assumed has a $1\%$ maximum tolerance in the considered average temperature according to [sensor standards](https://temperaturesensors.blogspot.com/2017/03/tolerances-on-temperature-reading.html).
 
 ## Repository Structure
 This repository is very simple. Folder `src` has three files: `config.mk`, `header.h` and `main.c`.
