@@ -80,9 +80,9 @@ uint16_t computeLiftFunction(
     double airDensity__kg_m3 = computeAirDensity(
 		staticPressure__Pa, humidAirGasConstant__J_KgK, airTemperature__K);
 	#ifdef RANDOM
-	print("Air density at flight config. = %lf kg/m3.\n", airDensity__kg_m3);
+	printf("Air density at flight config. = %lf kg/m3.\n", airDensity__kg_m3);
 	#else
-	print("Air density at flight config. = %f kg/m3.\n", airDensity__kg_m3);
+	printf("Air density at flight config. = %f kg/m3.\n", airDensity__kg_m3);
 	#endif
 
 	// Compute air velocity:
