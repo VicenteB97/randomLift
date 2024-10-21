@@ -12,7 +12,7 @@ Specifically, we use the following [mathematical model](https://www.grc.nasa.gov
 L = \frac{1}{2}\rho v^2 S C_L,
 ```
 
-where $\rho$ is the air density, $v$ is air velocity, $S$ is the surface area of the airfoil and $C_L$ is the lift coefficient. Also, the air density and velocity are computed as follows:
+where $\rho$ is the air density, $v$ is air velocity, $S$ is the surface area of the airfoil and $C_L$ is the lift coefficient. Also, the air density and [velocity](https://www.princeton.edu/~asmits/Bicycle_web/Bernoulli.html) are computed as follows:
 
 ```math
 \rho = \frac{P_{static}}{R\,T},\quad v^2 = 2\frac{P_{total} - P_{static}}{\rho},
@@ -42,14 +42,14 @@ Taking into account all equations, the set of input parameters to the model is: 
 
 Now, we consider the following distributional parameters for a cruise flight at $h = 2000~m$ over sea level:
 
-- $h \sim U(1900,2100)$ is an altitude ($m$) value based on [radar altimetry](https://avsi.aero/wp-content/uploads/2021/12/Radar-Altimeter-Overview-of-Design-and-Performance.pdf) assuming a $5\%$ tolerance error.
-- $P_{total} \sim U(101211.4125, 103256.0875)$ is the total pressure ($Pa$) [calculated from the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is itself obtained in-flight from several Pitot tubes.
+- $h \sim U(1980,2020)$ is an altitude ($m$) value based on [radar altimetry](https://avsi.aero/wp-content/uploads/2021/12/Radar-Altimeter-Overview-of-Design-and-Performance.pdf) assuming a $1\%$ tolerance error.
+- $P_{total} \sim U(101211.4125, 103256.0875)$ is the total pressure ($Pa$) [calculated from the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is itself obtained in-flight from several Pitot tubes assuming a $1\%$ measurement error tolerance.
 - $f \sim U(0.44325, 0.45675)$ according to the chart of [measurement tolerance](https://www.rotronic.com/media/productattachments/files/h/u/humidity-accuracy-demystified.pdf).
 - $T \sim U(262.9,263.1)$ is the static air temperature ($K$), which we have assumed has a $1\%$ maximum tolerance in the considered average temperature according to [sensor standards](https://temperaturesensors.blogspot.com/2017/03/tolerances-on-temperature-reading.html).
 
 Other distributions could have been used, but we have chosen Uniform distributions mainly because of two reasons:
 
-- All parameters must be positive for the equation to make sense, we need compact-support distributions.
+- All parameters must be positive and their possible values are upper-bounded for technical and physical reasons. Therefore we need compact-support distributions.
 - We have not been able to find enough information to consider more informative distributions.
 
 ## Repository Structure

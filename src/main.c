@@ -31,7 +31,7 @@ int main(void){
 	#ifdef RANDOM
 	totalPressure__Pa = UxHwDoubleUniformDist(101211.4125, 103256.0875);
     airTemperature__K = UxHwDoubleUniformDist(262.9, 263.1);
-	altitude__m = UxHwDoubleUniformDist(1900.0, 2100.0);
+	altitude__m = UxHwDoubleUniformDist(1980.0, 2020.0);
 	humidityFactor__ = UxHwDoubleUniformDist(0.44325, 0.45675);
 	#endif
 
