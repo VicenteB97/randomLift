@@ -57,6 +57,11 @@ uint16_t computeLiftFunction(
 ){
 	// First, we compute the specific gas constant for humid air:
 	double humidAirGasConstant__J_KgK = computeSpecificGasConstantHumidAir(humidityFactor__);
+	#ifdef RANDOM
+	printf("Humid air gas constant = %lf J/(kg K)\n", humidAirGasConstant__J_KgK);
+	#else
+	printf("Humid air gas constant = %f J/(kg K)\n", humidAirGasConstant__J_KgK);
+	#endif
 
 	// Compute the static pressure at cruise altitude
     double staticPressure__Pa = computeAltitudePressure(
@@ -65,13 +70,28 @@ uint16_t computeLiftFunction(
 		humidAirGasConstant__J_KgK,
 		humidityFactor__
 	);
+	#ifdef RANDOM
+	printf("Static pressure for flight config. = %lf Pa.\n", staticPressure__Pa);
+	#else
+	printf("Static pressure for flight config. = %f Pa.\n", staticPressure__Pa);
+	#endif
 
     // Compute air density:
     double airDensity__kg_m3 = computeAirDensity(
 		staticPressure__Pa, humidAirGasConstant__J_KgK, airTemperature__K);
+	#ifdef RANDOM
+	print("Air density at flight config. = %lf kg/m3.\n", airDensity__kg_m3);
+	#else
+	print("Air density at flight config. = %f kg/m3.\n", airDensity__kg_m3);
+	#endif
 
 	// Compute air velocity:
 	double airVelocitySquared__m_s = computeAirVelocitySquared(staticPressure__Pa, totalPressure__Pa, airDensity__kg_m3);
+	#ifdef RANDOM
+	printf("Air speed = %lf m/s.\n", sqrt(airVelocitySquared__m_s));
+	#else
+	printf("Air speed = %f m/s.\n", sqrt(airVelocitySquared__m_s));
+	#endif
 
     // Finally, compute the lift force by the airfoil:
     *outputLiftForce__N = computeLiftAirfoil(
