@@ -182,7 +182,7 @@ computeLiftFunction(
 	// Print final output
 	printf(
 		"OUTPUT:\n"
-		" - Total lift force is: %f N\n"
+		" - Total lift force is: %lf N\n"
 		" - Total lift force (using only pressures) is: %lf N\n", 
 		*outputLiftForce__N,
 		*outputLiftForceUsingPressure__N
