@@ -3,9 +3,9 @@
 
 # Computing the lift force of an airfoil with the Bernouilli equation
 
-This is a minimal example that computes the lift force of an airfoil subject to randomly distributed parameters accordig to the Bernouilli equation, which assumes our airplane is flying in non-compressible air or very low mach numbers.
-The repository contains a C source file in the `src` folder which gets compiled and executed by the  [Singaloid Cloud Developer Platform](http://signaloid.io).
+This is a minimal example that computes the lift force of an airfoil subject to randomly distributed parameters accordig to the Bernouilli equation, which assumes non-compressible air or low mach numbers regarding airflow. The repository contains a C source file in the `src` folder which gets compiled and executed by the  [Singaloid Cloud Developer Platform](http://signaloid.io).
 
+## Mathematical model
 Specifically, we use the following [mathematical model](https://www.grc.nasa.gov/www/k-12/VirtualAero/BottleRocket/airplane/lifteq.html):
 
 ```math 
@@ -18,39 +18,40 @@ where $\rho$ is the air density, $v$ is air velocity, $S$ is the surface area of
 \rho = \frac{P_{static}}{R\,T},\quad v^2 = 2\frac{P_{total} - P_{static}}{\rho},
 ```
 
-where $P$ are the pressures, $R$ is the specific gas constant and $T$ is the air temperature. The equation used for velocity is obtained as measured by a Pitot tube.
-
-Also, $P_{static}$ and $R$ depend on the flight altitude, and $\rho$ also depends on the air humidity by the following equations:
-
+where $P_{total}$ and $P_{static}$ are the pressures obtained by the dynamic and the static port of the [Pitot tube](http://www.erbman.org/Pitot%20Statics%20and%20the%20Standard%20Atmosphere%205th%20ed%20signed.pdf), respectively. $T$ is the ambient air temperature and $R$ is the [specific gas constant](https://blogs.millersville.edu/adecaria/files/2021/11/esci340-Lesson02-Thermodynamics.pdf) which is computed as follows:
 ```math
-P_{static} = P_{0}\exp\left( - \frac{gMh}{RT}\right),
+R = R_{d}(1-f) + f~R_v,
 ```
 
-where $P_{0}$ is static pressure at sea level, $h$ is altitude, $T$ is the air temperature, and $M$ is the molar mass of ambient air and $R$ is the specific gas constant. These values are computed as follows:
+where $f$ is the humidity factor, and $R_d$ and $R_v$ are the dry and water vapor specific gas constants, respectively.
 
-```math
-M = M_d(1-f) + M_{v}f, \quad 
-R = R_{d}(1 + f(R_v/R_d - 1)),
-```
+## Specific simulation parameters
+Taking into account all equations, the input parameters for the model are: $C_L, S, P_{total}, P_{static}, T$ and $f$. As a concrete example, we consider a [Cessna 172](http://dx.doi.org/10.13140/RG.2.2.27040.51205), which has the following characteristics:
 
-where $f$ is the humidity factor, $R_d$ and $R_v$ are the dry and water vapor molar masses, and $R_d$ and $R_v$ are the dry and water vapor specific gas constants, respectively.
+- $C_L = 0.64$ is the average lift coefficient.
+- $S = 16.17~m^2$ is the wing area.
 
-Taking into account all equations, the set of input parameters to the model is: $C_L, S, P_{total}, T, h$ and $f$. As a concrete example, we consider a [Cessna 172](http://dx.doi.org/10.13140/RG.2.2.27040.51205), which has the (assumed deterministic) parameters:
+Now, we consider the simulation of a flight with the following information that we assume is obtained from its onboard sensors:
 
-- $C_L = 0.64$ is the average lift coefficient in a cruising setting.
-- $S = 16.17~m^2$ is the average wing area.
+- $P_{static} \sim U(79000-1\%, 79000+1\%)$ is the total pressure ($Pa$) [calculated from the static port of the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is itself obtained in-flight from several Pitot tubes. The expected value has been obtained from [standard pressure tables](https://www.mide.com/air-pressure-at-altitude-calculator).
+- $P_{total} \sim U(81000 - 1\%, 81000+1\%)$ is the total pressure ($Pa$) [calculated from the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is also obtained in-flight from several Pitot tubes. Expected value is obtained by considering $2000~Pa$ of dynamic pressure.
+- $T \sim U(283-1.5\%, 283+1.5\%)$ is the static air temperature ($K$) according to [sensor standards](https://temperaturesensors.blogspot.com/2017/03/tolerances-on-temperature-reading.html).
+- $f \sim U(0.45-2\%, 0.45+2\%)$ according to the chart of [measurement tolerance](https://www.rotronic.com/media/productattachments/files/h/u/humidity-accuracy-demystified.pdf).
 
-Now, we consider the following distributional parameters for a cruise flight at $h = 2000~m$ over sea level:
+### Note on the distribution choice
+Other distributions could have been used, but we have chosen uniform distributions mainly because of two reasons:
 
-- $h \sim U(1980,2020)$ is an altitude ($m$) value based on [radar altimetry](https://avsi.aero/wp-content/uploads/2021/12/Radar-Altimeter-Overview-of-Design-and-Performance.pdf) assuming a $1\%$ tolerance error.
-- $P_{total} \sim U(101211.4125, 103256.0875)$ is the total pressure ($Pa$) [calculated from the pitot tube](https://www.omega.com/en-us/resources/pitot-tube), which is itself obtained in-flight from several Pitot tubes assuming a $1\%$ measurement error tolerance.
-- $f \sim U(0.44325, 0.45675)$ according to the chart of [measurement tolerance](https://www.rotronic.com/media/productattachments/files/h/u/humidity-accuracy-demystified.pdf).
-- $T \sim U(262.9,263.1)$ is the static air temperature ($K$), which we have assumed has a $1\%$ maximum tolerance in the considered average temperature according to [sensor standards](https://temperaturesensors.blogspot.com/2017/03/tolerances-on-temperature-reading.html).
-
-Other distributions could have been used, but we have chosen Uniform distributions mainly because of two reasons:
-
-- All parameters must be positive and their possible values are upper-bounded for technical and physical reasons. Therefore we need compact-support distributions.
+- All parameters must be positive and upper-bounded for technical and physical reasons. Compact-support distributions are perfect for this task.
 - We have not been able to find enough information to consider more informative distributions.
+
+### An interesing note regarding velocity
+Considering total and static pressures as random variables imply that velocity is also a random variable $v(\omega)$. 
+However, note that $v(\omega)$ will only be well defined if
+```math
+\mathbb{P}\left(\{\omega \in\Omega : P_{total}(\omega)\geq P_{static}(\omega)\}\right) = 1,
+``` 
+where $(\Omega,\mathcal{F},\mathbb{P})$ is a complete probability space.
+In our particluar case, we have built $P_{total}(\omega),~P_{static}(\omega)$ such that the support of their distributions do not overlap, so $v(\omega)$ is well-defined.
 
 ## Repository Structure
 
