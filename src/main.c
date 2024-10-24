@@ -5,12 +5,12 @@ main(void)
 {
 	// Parameter definition:
 	double 	liftForce__N,				// Output lift force (N)
-			totalPressure__Pa = 81000,  // Total pressure 
+			totalPressure__Pa  = 81000, // Total pressure 
 			staticPressure__Pa = 79000, // Static port
-			humidityFactor__ = 0.45,	// Humidity factor
-			airTemperature__K = 283.0,	// +10ºC
-			surfaceArea__m2 = 16.17, 	// Surface area (m2)
-			liftCoefficient__ = 0.64; 	// Av. lift coefficient
+			humidityFactor__   = 0.45,	// Humidity factor
+			airTemperature__K  = 283.0,	// +10ºC
+			surfaceArea__m2    = 16.17, // Surface area (m2)
+			liftCoefficient__  = 0.64; 	// Av. lift coefficient
 
 	// If we want to study the deterministic case, we include a positive-parameter-value check
 	double inputValues[] = {
@@ -34,7 +34,7 @@ main(void)
 	totalPressure__Pa  = UxHwDoubleUniformDist(totalPressure__Pa * (1 - 0.01), totalPressure__Pa * (1 + 0.01));
 	staticPressure__Pa = UxHwDoubleUniformDist(staticPressure__Pa * (1 - 0.01), staticPressure__Pa * (1 + 0.01));
 	humidityFactor__   = UxHwDoubleUniformDist(humidityFactor__ * (1 - 0.02), humidityFactor__ * (1 + 0.02));
-    airTemperature__K  = UxHwDoubleUniformDist(airTemperature__K * (1 - 0.015), airTemperature__K * (1 + 0.15));
+    airTemperature__K  = UxHwDoubleUniformDist(airTemperature__K * (1 - 0.015), airTemperature__K * (1 + 0.015));
 	#endif
 
 	// Compute the lift force 
