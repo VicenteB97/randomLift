@@ -79,6 +79,20 @@ computeLiftAirfoil(
     double liftCoefficient__ // No units added, since its a dimensionless constant
 );
 
+/// @brief Computes the lift force (N).
+/// @param airDensity__kg_m3 Air density (kg/m3)
+/// @param squaredAirflowVelocity__m_s Airflow velocity measured by Pitot tube (m/s)
+/// @param surfaceArea__m2 Surface area of airfoil (m2)
+/// @param liftCoefficient__ Lift coefficient of airfoil (dimensionless)
+/// @return Lift force (N)
+double 
+computeLiftAirfoilUsingPressure(
+    double totalPressure__Pa,
+    double staticPressure__Pa,
+    double surfaceArea__m2,
+    double liftCoefficient__ // No units added, since its a dimensionless constant
+);
+
 /// @brief This function computes the lift force (N) of an airfoil using
 /// pressure, temperature and its geometry.
 /// @param outputLiftForce__N Lift force from the airfoil
@@ -93,6 +107,7 @@ computeLiftAirfoil(
 uint16_t 
 computeLiftFunction(
     double* outputLiftForce__N,
+    double* outputLiftForceUsingPressure__N,
     double totalPressure__Pa,
     double staticPressure__Pa,
     double humidityFactor__,

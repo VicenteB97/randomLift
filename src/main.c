@@ -5,6 +5,7 @@ main(void)
 {
 	// Parameter definition:
 	double 	liftForce__N,				// Output lift force (N)
+		 	liftForceUsingPressures__N,	// Output lift force (N)
 			totalPressure__Pa  = 81000, // Total pressure 
 			staticPressure__Pa = 79000, // Static port
 			humidityFactor__   = 0.45,	// Humidity factor
@@ -40,6 +41,7 @@ main(void)
 	// Compute the lift force 
 	return computeLiftFunction(
 		&liftForce__N,
+		&liftForceUsingPressures__N,
 		totalPressure__Pa,
 		staticPressure__Pa,
 		humidityFactor__,
@@ -101,11 +103,22 @@ computeLiftAirfoil(
 ){
     return 0.5 * airDensity__kg_m3 * squaredAirflowVelocity__m_s * surfaceArea__m2 * liftCoefficient__;
 };
+
+double 
+computeLiftAirfoilUsingPressure(
+    double totalPressure__Pa,
+    double staticPressure__Pa,
+    double surfaceArea__m2,
+    double liftCoefficient__ // No units added, since its a dimensionless constant
+){
+	return (totalPressure__Pa - staticPressure__Pa) * surfaceArea__m2 * liftCoefficient__;
+};
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 uint16_t 
 computeLiftFunction(
     double* outputLiftForce__N,
+    double* outputLiftForceUsingPressure__N,
     double totalPressure__Pa,
     double staticPressure__Pa,
     double humidityFactor__,
@@ -158,11 +171,21 @@ computeLiftFunction(
         liftCoefficient__
     );
 
+	// Compute the lift force by the airfoil using pressures for contrast:
+    *outputLiftForceUsingPressure__N = computeLiftAirfoil(
+        airDensity__kg_m3,
+		airVelocitySquared__m_s,
+        surfaceArea__m2,
+        liftCoefficient__
+    );
+
 	// Print final output
 	printf(
 		"OUTPUT:\n"
-		"- Total lift force is: %f N\n", 
-		*outputLiftForce__N
+		" - Total lift force is: %f N\n"
+		" - Total lift force (using only pressures) is: %lf N\n", 
+		*outputLiftForce__N,
+		*outputLiftForceUsingPressure__N
 	);
     return EXIT_SUCCESS;
 };
